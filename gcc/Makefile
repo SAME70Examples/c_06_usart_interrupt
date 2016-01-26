@@ -1,13 +1,13 @@
 SOURCE_DIRS:= device/source ../source ../retarget/source ../mdk/RTE/CMSIS
 INCLUDE_DIRS:= device/include cmsis/include ../include ../retarget/include ./CMSIS_RTX/include  ../mdk/RTE
-LINKER_DIRS:= ./CMSIS_RTX/bin/
+LINKER_DIRS:=
 
 OUTPUT_EXEC:= salida.elf
 
 C_SOURCE_FILES:= system_same70.c RTX_Conf_CM.c board.c  delay.c  main.c  os_serial_stdio.c  os_usart_same70.c  safe_stdlib.c  serial_stdio.c  usart_same70.c  watchdogs.c
 CXX_SOURCE_FILES:=
 ASM_SOURCE_FILES:= startup_ARMCM7.S
-LINKER_FILES:= ./CMSIS_RTX/bin/libRTX_CM4.a
+LINKER_FILES:= $(RTX_PATH)/4.3.0/libRTX_CM4.a
 
 LD_SCRIPTS:= gcc_arm.ld
 
