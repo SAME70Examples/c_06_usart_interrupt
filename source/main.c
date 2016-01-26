@@ -23,11 +23,11 @@ int Thread1_init(void){
 
 void Thread1(void const *argument) {
   while(1){
-	//TODO
-	led_setState(LED_ON);
-	osDelay(500);
-	led_setState(LED_OFF);
-	osDelay(500);
+    //TODO
+    led_setState(LED_ON);
+    osDelay(500);
+    led_setState(LED_OFF);
+    osDelay(500);
   }
 }
 
@@ -49,14 +49,14 @@ int Thread2_init(void){
 int thread2_counter;
 int thread2_reset_counter;
 void Thread2(void const *argument) {
-	while(1){
-		if(thread2_reset_counter){
-			thread2_counter = 0;
-			thread2_reset_counter = 0;
-		}else{
-			thread2_counter++;
-		}
-	}
+    while(1){
+        if(thread2_reset_counter){
+            thread2_counter = 0;
+            thread2_reset_counter = 0;
+        }else{
+            thread2_counter++;
+        }
+    }
 }
 
 /*----------------------------------------------------------------------------
@@ -75,41 +75,41 @@ int Thread3_init(void){
 }
 
 void Thread3(void const *argument) {
-	thread2_reset_counter = 1;
-	osDelay(1);
-	while(1){
-		os_serial_printf(os_usart1_puts,"count = %d\n",thread2_counter);
-		thread2_reset_counter = 1;
-		osDelay(1000);
-	}
+    thread2_reset_counter = 1;
+    osDelay(1);
+    while(1){
+        os_serial_printf(os_usart1_puts,"count = %d\n",thread2_counter);
+        thread2_reset_counter = 1;
+        osDelay(1000);
+    }
 }
 
 int main(){
-	//PreKernelConfigration
-	SystemCoreClockUpdate();
-	watchdogs_disable_all();
-	//Initialize kernel
-	osKernelInitialize();
-	//Initialized hardware
-	os_usart1_init(9600);
-	button_init();
-	led_init();
-	os_serial_init();
-	//Initialize os objects
-	Thread1_init();
-	Thread2_init();
-	Thread3_init();
-	//Start kernel and thread switching
-	osKernelStart();
-	//User application
-	char myBuffer[80];
-	int lineCounter = 1;
+    //PreKernelConfigration
+    SystemCoreClockUpdate();
+    watchdogs_disable_all();
+    //Initialize kernel
+    osKernelInitialize();
+    //Initialized hardware
+    os_usart1_init(9600);
+    button_init();
+    led_init();
+    os_serial_init();
+    //Initialize os objects
+    Thread1_init();
+    Thread2_init();
+    Thread3_init();
+    //Start kernel and thread switching
+    osKernelStart();
+    //User application
+    char myBuffer[80];
+    int lineCounter = 1;
 
-	os_usart1_puts("El dinero es dinero\n");
+    os_usart1_puts("El dinero es dinero\n");
 
-	while(1){
-		os_usart1_gets(myBuffer);
-		os_serial_printf(os_usart1_puts,">>%s\n",myBuffer);
-		lineCounter++;
-	}
+    while(1){
+        os_usart1_gets(myBuffer);
+        os_serial_printf(os_usart1_puts,">>%s\n",myBuffer);
+        lineCounter++;
+    }
 }
