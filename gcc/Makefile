@@ -41,10 +41,14 @@ C_FLAGS:= $(ARCH_FLAGS) $(COMMON_FLAGS) $(USER_C_FLAGS)
 CXX_FLAGS:= $(ARCH_FLAGS) $(COMMON_FLAGS) $(USER_CXX_FLAGS)
 LINKER_FLAGS:= $(ARCH_FLAGS) $(COMMON_FLAGS) $(USER_LINKER_FLAGS) $(patsubst %,-L%,$(LIB_DIRS)) $(patsubst %,-l%,$(LIB_NAMES)) -T$(LD_SCRIPTS)
 
+DEPDIR := .d
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+POSTCOMPILE = mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d
+
 OBJECTS_DIR:= objects
 BIN_DIR:= bin
 
-DIRS_TO_CREATE:= $(OBJECTS_DIR) $(BIN_DIR)
+DIRS_TO_CREATE:= $(OBJECTS_DIR) $(BIN_DIR) $(DEPDIR)
 
 C_OBJECTS:= $(patsubst %,$(OBJECTS_DIR)/%.o,$(basename $(C_SOURCE_FILES)))
 CXX_OBJECTS:= $(patsubst %,$(OBJECTS_DIR)/%.o,$(basename $(CXX_SOURCE_FILES)))
@@ -60,26 +64,33 @@ LN=arm-none-eabi-gcc
 vpath %.c $(SOURCE_DIRS)
 vpath %.cc $(SOURCE_DIRS)
 vpath %.S $(SOURCE_DIRS)
-vpath %.a $(BIN_DIR) $(LINKER_DIRS)
-vpath %.elf $(BIN_DIR)
+vpath %.a $(LINKER_DIRS)
 
 .PHONY: disp clean debug burn
 
-all: $(OUTPUT_EXEC)
-$(BIN_DIR)/$(OUTPUT_EXEC): $(OBJECTS) $(LINKER_FILES) | $(BIN_DIR) 
+all: $(BIN_DIR)/$(OUTPUT_EXEC)
+$(BIN_DIR)/$(OUTPUT_EXEC): $(OBJECTS) $(LINKER_FILES) | $(BIN_DIR)
 	$(LN) $^ $(LINKER_FLAGS) -o $@
 	arm-none-eabi-size $@
 $(DIRS_TO_CREATE): %:
 	mkdir $@
-$(C_OBJECTS): $(OBJECTS_DIR)/%.o : %.c | $(OBJECTS_DIR)
-	$(CC) -c $< $(C_FLAGS) $(CPP_FLAGS) -o $@
+$(C_OBJECTS): $(OBJECTS_DIR)/%.o : %.c $(DEPDIR)/%.d | $(OBJECTS_DIR) $(DEPDIR)
+	$(CC) -c $< $(C_FLAGS) $(CPP_FLAGS) $(DEPFLAGS) -o $@
+	$(POSTCOMPILE)
 $(ASM_OBJECTS): $(OBJECTS_DIR)/%.o : %.S | $(OBJECTS_DIR)
 	$(AS) -c $< $(ASM_FLAGS) $(CPP_FLAGS) -o $@
-$(CXX_OBJECTS): $(OBJECTS_DIR)/%.o : %.cc | $(OBJECTS_DIR)
-	$(CXX) -c $< $(CXX_FLAGS) $(CPP_FLAGS) -o $@
+$(CXX_OBJECTS): $(OBJECTS_DIR)/%.o : %.cc $(DEPDIR)/%.d | $(OBJECTS_DIR) $(DEPDIR)
+	$(CXX) -c $< $(CXX_FLAGS) $(CPP_FLAGS) $(DEPDIR) -o $@
+	$(POSTCOMPILE)
 clean:
 	rm -rf $(DIRS_TO_CREATE)
 dist_clean: clean
+
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
+
+-include $(patsubst %, $(DEPDIR)/%.d,$(basename $(C_SOURCE_FILES)))
+-include $(patsubst %, $(DEPDIR)/%.d,$(basename $(CXX_SOURCE_FILES)))
 
 burn: $(BIN_DIR)/$(OUTPUT_EXEC)
 	openocd -f board/atmel_same70_xplained.cfg -c"init" -c"sleep 300"  -c"program erase $<" -c"sleep 300" -c"reset" -c"shutdown"
